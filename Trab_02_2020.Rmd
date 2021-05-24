@@ -1,0 +1,106 @@
+---
+title: "Estatística Computacional I"
+author: "Pedro Alves"
+subtitle: 'Trabalho 02 - (28/05/2020) '
+output:
+  html_document:
+    df_print: paged
+---
+
+Orientações:
+
+1.  Responda as questões deixando o código R nos respectivos chunks
+2.  Mantenha os nomes de objetos solicitados na questão
+3.  Sempre deixe por último o objeto que responde a pergunta
+
+
+## 1- Leia o arquivo cadastro_geral.csv carregando-o em um objeto com nome df.
+Sabe-se que os registros faltantes são representados pelo código "9999"
+
+```{r}
+df = read.csv("C:\\cadastro_geral.csv", sep = ';', dec = ",", header = TRUE, na.strings = "9999")
+df
+```
+
+## 2- Renomeie as colunas com os nomes a seguir, que já  estão na ordem das colunas.
+(cpf , nome, data_nascimento,telefone,cidade, cargo, area, vendas)
+Mantenha o nome df.
+Após renomear as colunas use um comando para mostrar as 3 primeiras linhas de df.
+
+```{r}
+colnames(df) = c('cpf','nome','data_nascimento','telefone','cidade','cargo','area','vendas')
+library(knitr)
+kable(df[1:3,])
+```
+
+
+## 3- A coluna cidade contém a cidade e a UF unidas por um hífen. Separe a cidade da UF, mantendo a coluna cidade só com o nome da cidade e coloque a UF em uma nova coluna de df, com nome uf.
+
+```{r}
+library(stringr)
+library(DT)
+cidade_uf = str_split_fixed(df$cidade,"-",2)
+df$cidade = cidade_uf[,1]
+df$uf = cidade_uf[,2]
+datatable(head(df))
+```
+
+
+## 4- Qual o número de cadastrados em cada UF?
+```{r}
+n_cadastro = table(df$uf)
+kable(n_cadastro, col.names = c("Estados","Frequência"))
+```
+
+## 5- Crie um novo objeto com os cadastrados da maior venda de cada UF
+
+```{r}
+uf = unique(df$uf)
+maior = 1:length(uf)
+
+for (i in 1:length(uf)) {
+    maior[i] = max(df$vendas[which(df$uf == uf[i])])
+}
+
+datatable(data.frame(uf,maior))
+```
+
+
+## 6- Separe o DDD do numero de telefone, criando a colunas: "ddd" e mantendo a coluna "telefone", mas sem o DDD.  
+
+```{r}
+df$ddd = substr(df$telefone,start = 1, stop = 4)
+df$telefone = substr(df$telefone, start = 5, stop = 14)
+datatable(head(df))
+```
+
+## 7- Verifique se a variável telefone esta formatada corretamente (somente números e com 8 dígitos) e faça as correções se necessário.
+```{r}
+df$telefone = gsub("-","",df$telefone)
+df$telefone = formatC(df$telefone, width = 8)
+datatable(head(df))
+```
+
+## 8- A nova coluna (variável ddd) deve ser incluída em df e deve ficar adjacente e anterior a coluna "telefone".
+
+```{r}
+df = df[c("cpf" , "nome", "data_nascimento", "ddd", "telefone", "cidade", "uf", "cargo", "area", "vendas")]
+datatable(head(df))
+```
+
+## 9- Crie uma nova coluna com a idade. (o nome de nova coluna deve ser "idade")
+
+```{r}
+df$data_nascimento = as.Date(df$data_nascimento, "%d/%m/%Y")
+df$idade = trunc(abs((difftime(df$data_nascimento, as.Date("2020-06-04"), units = "days"))/365))
+datatable(head(df))
+```
+
+## 10- Formate a coluna cpf mantendo sempre com 11 digitos e com "." e "-" (ex. ddd.ddd.ddd-dd)
+
+```{r}
+df$cpf = formatC(df$cpf, width=11, format="fg", flag="0")
+nov_dig = paste(substr(df$cpf, start = 0, stop = 3), substr(df$cpf, start = 4, stop =6), substr(df$cpf, start = 7, stop =9) ,sep = ".")
+df$cpf = paste(nov_dig, substr(df$cpf, start = 10, stop = 11),sep = "-") 
+datatable(head(df))
+```
